@@ -1,0 +1,25 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Generated project outputs
+stage1_outputs/
+stage2_outputs/
+stage3_outputs/
+
+# Temporary files
+*.tmp
+*.log
