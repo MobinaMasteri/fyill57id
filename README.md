@@ -1,287 +1,117 @@
-# Graph-Based Time Series Data Classification
+Graph-Based Time Series Data Classification
 
-A three-stage graph-based pipeline for constructing functional brain networks from fMRI time-series data, building a subject-similarity graph, and classifying subjects into Autism and Control groups using a Graph Convolutional Network (GCN).
+Overview
 
----
+This project presents a three-stage graph-based pipeline for analyzing fMRI time-series data and performing graph-based classification.
 
-## Overview
+The project converts fMRI time-series data into functional brain networks, constructs a graph representing similarities between subjects, and finally uses a Graph Convolutional Network (GCN) to classify subjects into Autism and Control groups.
 
-This project implements a three-stage graph-based pipeline for analyzing fMRI time-series data.
+The project consists of three main stages:
 
-The pipeline consists of:
-
-1. **Stage 1:** Construction of functional brain networks from fMRI time-series data.
-2. **Stage 2:** Construction of a subject-similarity graph based on the functional connectivity patterns of subjects.
-3. **Stage 3:** Classification of subjects into Autism and Control groups using a Graph Convolutional Network (GCN).
-
-The project was developed and tested using a specific fMRI dataset. The same dataset should be used to reproduce the project results.
+1. Stage 1: Construction and analysis of functional brain networks.
+2. Stage 2: Construction of a subject-similarity graph.
+3. Stage 3: Classification using a Graph Convolutional Network (GCN).
 
 ---
 
-## Project Objectives
+Objectives
 
 The main objectives of this project are:
 
-* Construct functional brain networks from fMRI time-series data.
-* Analyze connectivity between brain regions.
-* Represent relationships between subjects using a similarity graph.
-* Extract graph-based features from subjects.
-* Apply a Graph Convolutional Network for subject classification.
-* Evaluate classification performance using accuracy and a confusion matrix.
+- Construct functional brain networks from fMRI time-series data.
+- Calculate functional connectivity between brain regions.
+- Analyze the connectivity structure of individual subjects.
+- Calculate similarity between subjects.
+- Construct a graph representing relationships between subjects.
+- Extract graph-based features from the subject graph.
+- Train a Graph Convolutional Network (GCN).
+- Classify subjects into Autism and Control groups.
+- Evaluate the classification performance using accuracy and a confusion matrix.
 
 ---
 
-# Dataset
+Dataset
 
-This project uses fMRI time-series data and phenotypic information from the **Autism Brain Imaging Data Exchange (ABIDE)** dataset.
+This project uses fMRI data from the ABIDE (Autism Brain Imaging Data Exchange) dataset.
 
-The input dataset used in this project contains:
+The dataset used by this project contains:
 
-* **1035 `.1D` fMRI files**
-* `Phenotypic_V1_0b_preprocessed1.csv`
+- 1035 ".1D" fMRI time-series files
+- "Phenotypic_V1_0b_preprocessed1.csv"
 
-Each `.1D` file contains fMRI time-series data where:
+Dataset Files
 
-* Rows represent time points.
-* Columns represent brain regions of interest (ROIs).
+1. "rois_aal"
 
-The phenotypic CSV file contains subject information including:
+The "rois_aal" folder contains the fMRI time-series files.
 
-* `SUB_ID`
-* `DX_GROUP`
+Each ".1D" file contains time-series data for multiple brain regions (ROIs).
 
-For this project:
+The rows represent time points, while the columns represent brain regions.
 
-* `DX_GROUP = 1` → Autism
-* `DX_GROUP = 2` → Control
+2. "Phenotypic_V1_0b_preprocessed1.csv"
+
+This CSV file contains the phenotypic information used in Stage 3.
+
+The main columns used by the project are:
+
+- "SUB_ID" — Subject ID
+- "DX_GROUP" — Diagnostic group
+
+The labels are interpreted as:
+
+DX_GROUP = 1 → Autism
+DX_GROUP = 2 → Control
 
 ---
 
-## Download the Dataset
+Dataset Download
 
-The exact input dataset used in this project is available through the following Google Drive link:
+The dataset is not included in this GitHub repository because of its size.
 
-**[Download the Project Dataset](https://drive.google.com/file/d/19MvA3VDgXzv9KyyYDljTH1xss3vcmSyz/view?usp=sharing)**
+The dataset should be downloaded separately using the provided Google Drive link.
 
-Download the dataset before running the project.
+After downloading the dataset, the files should be placed inside a local "data" directory in the project.
 
----
+The expected structure is:
 
-## Dataset Placement
-
-The Python scripts are configured to look for the input data on the user's Desktop.
-
-After downloading and extracting the dataset, place the files on your Desktop using the following structure:
-
-```text
-Desktop/
+AD-Graph-Based-Classification/
 │
-├── rois_aal/
-│   ├── *.1D
-│   ├── *.1D
-│   ├── ...
-│   └── *.1D
+├── data/
+│   ├── rois_aal/
+│   │   ├── *.1D
+│   │   ├── ...
+│   │
+│   └── Phenotypic_V1_0b_preprocessed1.csv
 │
-└── Phenotypic_V1_0b_preprocessed1.csv
-```
+├── stage1/
+├── stage2/
+├── stage3/
+├── README.md
+├── requirements.txt
+└── .gitignore
 
-The folder containing the `.1D` files must be named exactly:
+Important
 
-```text
+The "data" folder is used locally and the dataset itself does not need to be uploaded to GitHub.
+
+After cloning the repository, create the "data" folder and place the downloaded dataset inside it.
+
+The folder and file names should remain exactly:
+
 rois_aal
-```
-
-The phenotypic file must be placed directly on the Desktop and must have the exact filename:
-
-```text
 Phenotypic_V1_0b_preprocessed1.csv
-```
 
-### Important
+The project code expects these exact names.
 
-The dataset used in this project is the specific dataset used during development and testing.
-
-Using a different dataset may produce different results or may require modifications to the code.
+«Note: Using a different dataset, changing the dataset structure, or changing the file names may produce different results or require modifications to the code.»
 
 ---
 
-# Stage 1: Functional Brain Network Construction
+Project Structure
 
-Stage 1 processes the fMRI time-series data of individual subjects and constructs functional brain networks.
+The GitHub repository contains the source code and project documentation, but does not contain the dataset.
 
-For each subject:
-
-1. The fMRI time-series matrix is loaded.
-2. A Pearson correlation matrix is calculated between ROIs.
-3. Several correlation thresholds are evaluated.
-4. A threshold is selected based on the resulting graph density.
-5. A functional brain network is constructed.
-6. Edges represent functional connectivity between brain regions.
-7. Graph information and summary reports are saved.
-
-### Correlation Matrix
-
-The Pearson correlation coefficient is used to measure the relationship between pairs of ROIs.
-
-The correlation matrix is calculated using:
-
-```python
-np.corrcoef(matrix.T)
-```
-
-### Thresholding
-
-Candidate thresholds are evaluated:
-
-```text
-0.3
-0.4
-0.5
-0.6
-0.7
-```
-
-The selected threshold is based on the resulting number of graph edges.
-
-### Stage 1 Outputs
-
-The generated results are saved on the Desktop:
-
-```text
-Desktop/stage1_outputs/
-```
-
-Example outputs include:
-
-```text
-stage1_outputs/
-├── threshold_graph_edges.csv
-├── person_report.csv
-└── ...
-```
-
----
-
-# Stage 2: Subject Similarity Graph Construction
-
-Stage 2 constructs a graph representing the similarity between subjects.
-
-For each subject:
-
-1. The functional connectivity matrix is calculated.
-2. The upper triangular part of the correlation matrix is extracted.
-3. This upper triangular part is used as the subject feature vector.
-4. Cosine similarity is calculated between subjects.
-5. A subject-similarity graph is constructed.
-6. Subjects are represented as nodes.
-7. Similarity relationships are represented as edges.
-
-### Cosine Similarity
-
-Cosine similarity is used to measure the similarity between the feature vectors of subjects.
-
-Candidate similarity thresholds are evaluated:
-
-```text
-0.10
-0.20
-0.30
-0.40
-0.50
-0.60
-```
-
-### Stage 2 Outputs
-
-The generated results are saved on the Desktop:
-
-```text
-Desktop/stage2_outputs/
-```
-
-The main output used by Stage 3 is:
-
-```text
-person_graph_edges.csv
-```
-
----
-
-# Stage 3: Graph-Based Classification with GCN
-
-Stage 3 uses a **Graph Convolutional Network (GCN)** to classify subjects into Autism and Control groups.
-
-The subject-similarity graph generated in Stage 2 is used as the input graph.
-
-## Node Features
-
-Two graph-based features are used for each subject:
-
-* Degree
-* Clustering coefficient
-
-Therefore, each subject is represented using two node features.
-
-## GCN Architecture
-
-The model contains two neural network layers:
-
-```text
-Input Features
-      ↓
-Graph Convolution Layer
-      ↓
-ReLU Activation
-      ↓
-Graph Convolution Layer
-      ↓
-Output Classes
-```
-
-The model is implemented using PyTorch.
-
-## Training Configuration
-
-The current implementation uses:
-
-* Hidden dimension: `16`
-* Output classes: `2`
-* Learning rate: `0.01`
-* Optimizer: Adam
-* Training epochs: `200`
-* Loss function: Cross-Entropy Loss
-* Train/Test split: `80/20`
-* Random state: `42`
-
-The labels are derived from the `DX_GROUP` column:
-
-```text
-DX_GROUP = 1 → Autism → class 0
-DX_GROUP = 2 → Control → class 1
-```
-
-## Stage 3 Outputs
-
-The generated results are saved on the Desktop:
-
-```text
-Desktop/stage3_outputs/
-```
-
-Important output files include:
-
-```text
-stage3_report.csv
-prediction_results.csv
-```
-
----
-
-# Project Structure
-
-The GitHub repository contains the source code and project documentation:
-
-```text
 AD-Graph-Based-Classification/
 │
 ├── stage1/
@@ -296,213 +126,498 @@ AD-Graph-Based-Classification/
 ├── README.md
 ├── requirements.txt
 └── .gitignore
-```
 
-The input dataset is downloaded separately from the Google Drive link provided above and placed on the Desktop before running the project.
+The dataset is downloaded separately and placed locally inside:
+
+data/
+├── rois_aal/
+└── Phenotypic_V1_0b_preprocessed1.csv
 
 ---
 
-# Installation
+Stage 1 — Functional Brain Network Construction
 
-## Windows
+Stage 1 constructs a functional brain network for each subject.
 
-Create a virtual environment:
+Step 1: Reading fMRI Data
 
-```bash
-python -m venv .venv
-```
+Each ".1D" file is loaded as a numerical matrix.
 
-Activate the virtual environment:
+The rows represent time points and the columns represent brain regions.
 
-```bash
-.venv\Scripts\activate
-```
+---
 
-Install the required packages:
+Step 2: Correlation Matrix
 
-```bash
+Pearson correlation is calculated between the time-series of all brain regions.
+
+The correlation matrix is calculated using:
+
+np.corrcoef(matrix.T)
+
+Each element of the resulting matrix represents the functional correlation between two ROIs.
+
+---
+
+Step 3: Threshold Selection
+
+Several candidate thresholds are tested:
+
+0.3
+0.4
+0.5
+0.6
+0.7
+
+The program randomly selects 100 subjects using:
+
+random.seed(42)
+
+For each threshold, the average number of edges in the resulting graphs is calculated.
+
+The first threshold producing an average number of edges between:
+
+100 ≤ edges ≤ 200
+
+is selected.
+
+If no threshold satisfies this condition, the fallback threshold is:
+
+0.5
+
+---
+
+Step 4: Threshold Graph
+
+An edge is created between two ROIs when:
+
+abs(correlation) >= threshold
+
+Each edge contains:
+
+- Correlation
+- Distance
+
+The distance is calculated as:
+
+1 - abs(correlation)
+
+---
+
+Step 5: Strongest and Weakest Connections
+
+For each subject, the strongest and weakest ROI connections are identified based on the absolute correlation value.
+
+---
+
+Stage 1 Outputs
+
+The results are saved in:
+
+stage1_outputs/
+
+For each subject, the program creates a separate directory containing:
+
+threshold_graph_edges.csv
+person_report.csv
+
+For up to 10 subjects, a graph visualization is also generated:
+
+threshold_graph.png
+
+---
+
+Stage 2 — Subject Similarity Graph
+
+Stage 2 constructs a graph where:
+
+- Each node represents one subject.
+- Each edge represents similarity between two subjects.
+
+Step 1: Correlation Feature Vector
+
+For every subject, the Pearson correlation matrix is calculated.
+
+Only the upper triangular part of the correlation matrix is extracted.
+
+This produces one feature vector for each subject.
+
+---
+
+Step 2: Cosine Similarity
+
+Cosine similarity is calculated between the feature vectors of every pair of subjects.
+
+The similarity is calculated using:
+
+cosine_similarity()
+
+---
+
+Step 3: Similarity Threshold
+
+The following candidate thresholds are tested:
+
+0.10
+0.20
+0.30
+0.40
+0.50
+0.60
+
+100 subjects are randomly selected using:
+
+random.seed(42)
+
+The first threshold producing between:
+
+100 ≤ edges ≤ 1500
+
+is selected.
+
+If no threshold satisfies this condition, the fallback threshold is:
+
+0.3
+
+---
+
+Step 4: Subject Graph
+
+Each subject becomes a node.
+
+An edge is created when:
+
+similarity >= similarity_threshold
+
+The similarity value is stored as an edge attribute.
+
+---
+
+Stage 2 Outputs
+
+The results are saved in:
+
+stage2_outputs/
+
+The main files are:
+
+person_graph_edges.csv
+graph_report.csv
+
+The program also generates up to 10 sample graph visualizations.
+
+---
+
+Stage 3 — Graph Convolutional Network Classification
+
+Stage 3 uses the subject-similarity graph created in Stage 2.
+
+The goal is to classify subjects into:
+
+Autism
+Control
+
+---
+
+Step 1: Loading the Subject Graph
+
+The following file from Stage 2 is used:
+
+stage2_outputs/person_graph_edges.csv
+
+The subject graph is reconstructed using NetworkX.
+
+---
+
+Step 2: Loading Labels
+
+The phenotypic file:
+
+Phenotypic_V1_0b_preprocessed1.csv
+
+is used to obtain the diagnostic labels.
+
+The mapping is:
+
+DX_GROUP = 1 → Autism
+DX_GROUP = 2 → Control
+
+---
+
+Step 3: Node Features
+
+Two graph-based features are calculated for each subject:
+
+1. Degree
+2. Clustering coefficient
+
+Therefore, every subject is represented using two node features:
+
+[degree, clustering]
+
+---
+
+Step 4: Graph Adjacency Matrix
+
+A binary adjacency matrix is constructed from the subject graph.
+
+Self-loops are added to the adjacency matrix.
+
+The adjacency matrix is then symmetrically normalized using the node degrees.
+
+---
+
+Step 5: GCN Architecture
+
+The model consists of two graph convolutional layers implemented using PyTorch linear layers.
+
+The architecture is:
+
+Input
+  ↓
+Linear Layer
+  ↓
+ReLU
+  ↓
+Linear Layer
+  ↓
+Output
+
+The configuration is:
+
+Input dimension: 2
+Hidden dimension: 16
+Output dimension: 2
+
+The model uses:
+
+Optimizer: Adam
+Learning rate: 0.01
+Epochs: 200
+Loss function: Cross Entropy
+
+---
+
+Step 6: Train/Test Split
+
+The dataset is divided into:
+
+80% → Training
+20% → Testing
+
+The split uses:
+
+random_state=42
+
+and stratification is used to preserve the class distribution.
+
+---
+
+Stage 3 Outputs
+
+The results are saved in:
+
+stage3_outputs/
+
+The generated files are:
+
+stage3_report.csv
+prediction_results.csv
+
+The report contains:
+
+- Number of subjects
+- Number of Autism subjects
+- Number of Control subjects
+- Accuracy
+- Confusion matrix values
+
+---
+
+Installation
+
+Make sure Python is installed on your system.
+
+Clone the repository and enter the project directory.
+
+Then install the required packages:
+
 pip install -r requirements.txt
-```
+
+The required libraries include:
+
+numpy
+pandas
+networkx
+matplotlib
+scikit-learn
+torch
 
 ---
 
-## macOS / Linux
+Dataset Setup
 
-Create a virtual environment:
+After downloading the dataset:
 
-```bash
-python3 -m venv .venv
-```
+1. Open the project folder.
+2. Create a folder named:
 
-Activate the virtual environment:
+data
 
-```bash
-source .venv/bin/activate
-```
+3. Put the "rois_aal" folder inside "data".
+4. Put "Phenotypic_V1_0b_preprocessed1.csv" inside "data".
 
-Install the required packages:
+The final structure should be:
 
-```bash
-pip install -r requirements.txt
-```
+AD-Graph-Based-Classification/
+│
+├── data/
+│   ├── rois_aal/
+│   │   ├── *.1D
+│   │   └── ...
+│   │
+│   └── Phenotypic_V1_0b_preprocessed1.csv
+│
+├── stage1/
+├── stage2/
+├── stage3/
+├── README.md
+├── requirements.txt
+└── .gitignore
 
 ---
 
-# Running the Project
-
-Before running the code, make sure the dataset has been downloaded and placed correctly on the Desktop.
+Running the Project
 
 The three stages should be executed in order.
 
-## Step 1 — Run Stage 1
+Stage 1
 
-```bash
 python stage1/stage1.py
-```
 
-Stage 1 reads the fMRI input files from:
+Stage 1 creates:
 
-```text
-Desktop/rois_aal/
-```
-
-and generates:
-
-```text
-Desktop/stage1_outputs/
-```
+stage1_outputs/
 
 ---
 
-## Step 2 — Run Stage 2
+Stage 2
 
-After Stage 1 is completed, run:
+After Stage 1 is completed:
 
-```bash
 python stage2/stage2.py
-```
 
-Stage 2 generates:
+Stage 2 creates:
 
-```text
-Desktop/stage2_outputs/
-```
+stage2_outputs/
 
-including:
+The main file used by Stage 3 is:
 
-```text
-person_graph_edges.csv
-```
+stage2_outputs/person_graph_edges.csv
 
 ---
 
-## Step 3 — Run Stage 3
+Stage 3
 
-After Stage 2 is completed, run:
+After Stage 2 is completed:
 
-```bash
 python stage3/stage3.py
-```
 
-Stage 3 reads the subject graph and phenotypic information and generates:
+Stage 3 creates:
 
-```text
-Desktop/stage3_outputs/
-```
-
-including:
-
-```text
-stage3_report.csv
-prediction_results.csv
-```
+stage3_outputs/
 
 ---
 
-# Reproducibility
+Reproducibility
 
-Random seeds are used in different parts of the project to improve reproducibility.
+The project uses fixed random seeds in the relevant parts of the pipeline.
 
 For example:
 
-```python
 random.seed(42)
-```
 
 and:
 
-```python
 random_state=42
-```
 
-The same input dataset, code, and configuration should be used when attempting to reproduce the results.
+This helps make the sampling and train/test split reproducible.
 
 ---
 
-# Design Decisions
+Design Decisions
 
-## Stage 1
+Several design decisions were made in this implementation.
 
-A threshold-based functional connectivity graph is constructed from the ROI correlation matrix.
+Stage 1
 
-Candidate thresholds are evaluated, and a threshold is selected according to the resulting number of graph edges.
+The functional connectivity matrix is constructed using Pearson correlation.
 
-Each graph node represents an ROI, while edges represent functional relationships between ROIs.
+The graph is created by applying an absolute correlation threshold.
 
-## Stage 2
+Stage 2
 
-The upper triangular part of each subject's correlation matrix is used as the subject feature vector.
+The complete upper-triangular correlation matrix is used as the feature vector for each subject.
 
 Cosine similarity is then used to measure similarity between subjects.
 
-The resulting graph represents subjects as nodes and their similarity relationships as edges.
+Stage 3
 
-## Stage 3
+The subject graph is represented using binary adjacency.
 
-A Graph Convolutional Network is used for graph-based classification.
+Although Stage 2 stores similarity values on its edges, the Stage 3 adjacency matrix uses binary connections rather than similarity values as edge weights.
 
-The current implementation uses:
+The node features currently consist of:
 
-* Degree
-* Clustering coefficient
-
-as node features.
-
-The adjacency matrix used by the GCN is binary and includes self-loops with symmetric normalization.
+Degree
+Clustering coefficient
 
 ---
 
-# Implementation Notes and Limitations
+Limitations
 
-* The project was developed and tested using the specified input dataset.
-* Results may change when a different dataset is used.
-* Stage 1 and Stage 2 use threshold selection based on graph edge counts.
-* The current GCN implementation uses binary adjacency rather than the original similarity values as adjacency weights.
-* Only degree and clustering coefficient are currently used as node features.
-* The project is an academic implementation and is not intended for clinical diagnosis.
-* The generated output directories are created on the user's Desktop and are not required to be stored in the GitHub repository.
+The current implementation has several limitations:
 
----
-
-# References
-
-* Di Martino, A., et al. (2014). The Autism Brain Imaging Data Exchange: Towards a Large-Scale Evaluation of the Intrinsic Brain Architecture in Autism. *Molecular Psychiatry*.
-* Bullmore, E., & Sporns, O. (2009). Complex brain networks: graph theoretical analysis of structural and functional systems. *Nature Reviews Neuroscience*.
-* Kipf, T. N., & Welling, M. (2017). Semi-Supervised Classification with Graph Convolutional Networks.
-* PyTorch Documentation.
-* Scikit-learn Documentation.
-* NetworkX Documentation.
+- The dataset is not included in the GitHub repository.
+- Results depend on the selected dataset and preprocessing.
+- Threshold selection is based on graph edge counts.
+- Stage 3 uses only two node features.
+- Stage 3 uses binary adjacency rather than weighted similarity values.
+- The model uses a single train/test split.
+- No cross-validation is performed.
+- The current implementation is intended as an academic/project implementation rather than a production system.
 
 ---
 
-# Academic Context
+References
 
-This project was developed as an academic project involving:
+- Di Martino, A. et al. (2014). The Autism Brain Imaging Data Exchange: Towards a Large-Scale Evaluation of the Intrinsic Brain Architecture in Autism.
+- Bullmore, E., & Sporns, O. (2009). Complex brain networks: graph theoretical analysis of structural and functional systems.
+- Kipf, T. N., & Welling, M. (2017). Semi-Supervised Classification with Graph Convolutional Networks.
+- PyTorch Documentation.
+- scikit-learn Documentation.
+- NetworkX Documentation.
 
-* fMRI time-series analysis
-* Functional connectivity
-* Graph-based data representation
-* Subject similarity modeling
-* Graph neural networks
-* Graph Convolutional Networks
-* Autism vs. Control classification
+---
+
+Academic Context
+
+This project was developed as an academic implementation of graph-based analysis and classification of fMRI time-series data.
+
+The complete pipeline demonstrates the following concepts:
+
+fMRI Time-Series
+       ↓
+Correlation Matrix
+       ↓
+Functional Brain Graph
+       ↓
+Subject Feature Vectors
+       ↓
+Subject Similarity Graph
+       ↓
+Graph Features
+       ↓
+Graph Convolutional Network
+       ↓
+Autism / Control Classification
