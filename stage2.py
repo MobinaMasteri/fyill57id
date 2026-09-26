@@ -6,10 +6,12 @@ from pathlib import Path
 from sklearn.metrics.pairwise import cosine_similarity
 
 
-DESKTOP = Path.home() / "Desktop"
+PROJECT_DIR = Path(__file__).resolve().parent.parent
 
-ROI_DIR = DESKTOP / "rois_aal"
-OUTPUT_DIR = DESKTOP / "stage2_outputs"
+DATA_DIR = PROJECT_DIR / "data"
+
+ROI_DIR = DATA_DIR / "rois_aal"
+OUTPUT_DIR = PROJECT_DIR / "stage2_outputs"
 
 def read_fmri_file(file_path):
 
