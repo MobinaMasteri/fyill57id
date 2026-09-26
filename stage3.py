@@ -10,14 +10,15 @@ from pathlib import Path
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, confusion_matrix
 
+PROJECT_DIR = Path(__file__).resolve().parent.parent
 
-DESKTOP = Path.home() / "Desktop"
+DATA_DIR = PROJECT_DIR / "data"
 
-STAGE2_DIR = DESKTOP / "stage2_outputs"
+STAGE2_DIR = PROJECT_DIR / "stage2_outputs"
 
-PHENOTYPIC_FILE = DESKTOP / "Phenotypic_V1_0b_preprocessed1.csv"
+PHENOTYPIC_FILE = DATA_DIR / "Phenotypic_V1_0b_preprocessed1.csv"
 
-OUTPUT_DIR = DESKTOP / "stage3_outputs"
+OUTPUT_DIR = PROJECT_DIR / "stage3_outputs"
 
 def read_person_graph(edge_file):
 
