@@ -4,11 +4,12 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-DESKTOP = Path.home() / "Desktop"
+PROJECT_DIR = Path(__file__).resolve().parent.parent
 
-ROI_DIR = DESKTOP / "rois_aal"
-OUTPUT_DIR = DESKTOP / "stage1_outputs"
+DATA_DIR = PROJECT_DIR / "data"
 
+ROI_DIR = DATA_DIR / "rois_aal"
+OUTPUT_DIR = PROJECT_DIR / "stage1_outputs"
 def read_fmri_file(file_path):
 matrix = np.loadtxt(file_path)
 return matrix
